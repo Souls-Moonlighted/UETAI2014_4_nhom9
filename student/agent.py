@@ -80,24 +80,29 @@ class Agent:
     def _calculate_budget(self, obs: Observation, time_limit_ms: float, board: tuple) -> float:
         """Tính toán thời gian suy nghĩ hợp lý cho nước đi hiện tại.
         
-        Chiến lược:
-        - Lấy thời gian còn lại chia đều cho số nước đi dự kiến (khoảng 1.000 nước).
-        - Điều chỉnh: Bàn cờ thoáng (>= 7 ô) đi nhanh 0.6x; bàn cờ nguy cấp (<= 3 ô) suy nghĩ kỹ 1.6x.
+        Hỗ trợ cả 2 chế độ:
+        1. Giới hạn tổng thời gian (obs.time_remaining_ms is not None): Phân bổ 60s cho cả ván.
+        2. Chạy đến Game Over (obs.time_remaining_ms is None): Sử dụng ngân sách từng nước (time_limit_ms).
         """
-        time_left_ms = obs.time_remaining_ms if obs.time_remaining_ms is not None else time_limit_ms
-        if time_left_ms is None or time_left_ms <= 3.0:
-            return 0.0
-
-        estimated_moves = max(200.0, 1000.0 - obs.move_count)
-        base_budget = time_left_ms / estimated_moves
-
         empty = empty_count(board)
         if empty <= 3:
-            multiplier = 1.6
+            multiplier = 1.5
         elif empty >= 7:
-            multiplier = 0.6
+            multiplier = 0.7
         else:
             multiplier = 1.0
 
-        budget = base_budget * multiplier
-        return min(budget, 60.0, max(0.0, time_left_ms - 2.0))
+        if obs.time_remaining_ms is not None:
+            time_left_ms = obs.time_remaining_ms
+            if time_left_ms <= 3.0:
+                return 0.0
+            estimated_moves = max(200.0, 1000.0 - obs.move_count)
+            base_budget = time_left_ms / estimated_moves
+            budget = base_budget * multiplier
+            return min(budget, 60.0, max(0.0, time_left_ms - 2.0))
+        else:
+            limit = time_limit_ms if time_limit_ms is not None and time_limit_ms > 0 else 50.0
+            base_budget = min(limit * 0.85, 45.0)
+            budget = base_budget * multiplier
+            return min(budget, limit - 2.0 if limit > 5.0 else limit)
+
