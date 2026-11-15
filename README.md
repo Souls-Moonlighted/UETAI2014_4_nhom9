@@ -1,4 +1,4 @@
-# BÀI KIỂM TRA GIỮA KỲ — 2048 AI AGENT
+# 2048 AI AGENT
 
 Kho mã nguồn này là bài làm kiểm tra giữa kỳ học phần **Biểu diễn tri thức và tìm kiếm nâng cao** (Mã học phần: **AI2014**).
 
